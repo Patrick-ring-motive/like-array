@@ -8,7 +8,13 @@
             }
         }
     };
-    const globalObject = q(() => globalThis) ?? q(() => self) ?? q(() => global) ?? q(() => window) ?? this ?? {};
+    const globalObject =
+        q(() => globalThis) ??
+        q(() => self) ??
+        q(() => global) ??
+        q(() => window) ??
+        this ??
+        {};
     for (let x of ["globalThis", "self", "global"]) {
         globalObject[x] = globalObject;
     }
@@ -16,7 +22,7 @@
         const fn = args?.shift?.();
         return fn && new fn(...args);
     };
-    const objDoProp = function(obj, prop, def, enm, mut) {
+    const objDoProp = function (obj, prop, def, enm, mut) {
         return Object.defineProperty(obj, prop, {
             value: def,
             writable: mut,
@@ -24,11 +30,16 @@
             configurable: mut,
         });
     };
-    const objDefProp = (obj, prop, def) => objDoProp(obj, prop, def, false, true);
-    const objNewProp = (obj, prop, def) => obj[prop] ?? objDoProp(obj, prop, def, false, true);
-    const objDefEnum = (obj, prop, def) => objDoProp(obj, prop, def, true, true);
-    const objFrzProp = (obj, prop, def) => objDoProp(obj, prop, def, false, false);
-    const objFrzEnum = (obj, prop, def) => objDoProp(obj, prop, def, true, false);
+    const objDefProp = (obj, prop, def) =>
+        objDoProp(obj, prop, def, false, true);
+    const objNewProp = (obj, prop, def) =>
+        obj[prop] ?? objDoProp(obj, prop, def, false, true);
+    const objDefEnum = (obj, prop, def) =>
+        objDoProp(obj, prop, def, true, true);
+    const objFrzProp = (obj, prop, def) =>
+        objDoProp(obj, prop, def, false, false);
+    const objFrzEnum = (obj, prop, def) =>
+        objDoProp(obj, prop, def, true, false);
     const objTryProp = (obj, prop, def) => {
         try {
             return objDefProp(obj, prop, def);
@@ -36,45 +47,54 @@
             return e;
         }
     };
-    const getPropKeys = (obj) => Object.getOwnPropertyNames(obj).concat(Object.getOwnPropertySymbols(obj), );
+    const getPropKeys = (obj) =>
+        Object.getOwnPropertyNames(obj).concat(
+            Object.getOwnPropertySymbols(obj),
+        );
     const ArrayIteratorPrototype = Object.getPrototypeOf([][Symbol.iterator]());
-    const SetIteratorPrototype = Object.getPrototypeOf(new Set()[Symbol.iterator]());
-    const StringIteratorPrototype = Object.getPrototypeOf('' [Symbol.iterator]());
+    const SetIteratorPrototype = Object.getPrototypeOf(
+        new Set()[Symbol.iterator](),
+    );
+    const StringIteratorPrototype = Object.getPrototypeOf(
+        ""[Symbol.iterator](),
+    );
     (globalThis.HTMLCollection ??= []).prototype ??= [];
     (globalThis.HTMLAllCollection ??= []).prototype ??= [];
     (globalThis.NodeList ??= []).prototype ??= [];
-    const str = x => String(x?.description ?? x?.source ?? x);
+    const str = (x) => String(x?.description ?? x?.source ?? x);
 
     function sourceIterators(iterable) {
-        const valuesKey = Symbol("values");
-        objDefProp(iterable, valuesKey, iterable.values);
+        const $values = Symbol("values");
+        objDefProp(iterable, $values, iterable.values);
         objDefProp(iterable, "values", function values() {
-            const proto = Object.create(ArrayIteratorPrototype);
-            const iter = this[valuesKey]();
-            objDefProp(proto, "&source", this);
-            return Object.setPrototypeOf(iter,proto);
+            const iter = this[$values]();
+            objDefProp(iter, "&source", this);
+            return iter;
         });
-        const keysKey = Symbol("keys");
-        iterable.keys && (objDefProp(iterable, keysKey, iterable.keys), objDefProp(iterable, "keys", function keys() {
-            const proto = Object.create(ArrayIteratorPrototype);
-            const iter = this[keysKey]();
-            objDefProp(proto, "&source", this);
-            return Object.setPrototypeOf(iter,proto);
-        }));
-        const entriesKey = Symbol("entries");
-        iterable.entries && (objDefProp(iterable, entriesKey, iterable.entries), objDefProp(iterable, "entries", function entries() {
-            const proto = Object.create(ArrayIteratorPrototype);
-            const iter = this[entriesKey]();
-            objDefProp(proto, "&source", this);
-            return Object.setPrototypeOf(iter,proto);
-        }));
-        const symbolIterator = Symbol("iterator");
-        iterable[Symbol.iterator] && (objDefProp(iterable, symbolIterator, iterable[Symbol.iterator]), objDefProp(iterable, Symbol.iterator, function iterator() {
-            const proto = Object.create(ArrayIteratorPrototype);
-            const iter = this[symbolIterator]();
-            objDefProp(proto, "&source", this);
-            return Object.setPrototypeOf(iter,proto);;
-        }));
+        const $keys = Symbol("keys");
+        iterable.keys &&
+            (objDefProp(iterable, $keys, iterable.keys),
+            objDefProp(iterable, "keys", function keys() {
+                const iter = this[$keys]();
+                objDefProp(iter, "&source", this);
+                return iter;
+            }));
+        const $entries = Symbol("entries");
+        iterable.entries &&
+            (objDefProp(iterable, $entries, iterable.entries),
+            objDefProp(iterable, "entries", function entries() {
+                const iter = this[$entries]();
+                objDefProp(iter, "&source", this);
+                return iter;
+            }));
+        const $iterator = Symbol("iterator");
+        iterable[Symbol.iterator] &&
+            (objDefProp(iterable, $iterator, iterable[Symbol.iterator]),
+            objDefProp(iterable, Symbol.iterator, function iterator() {
+                const iter = this[$iterator]();
+                objDefProp(iter, "&source", this);
+                return iter;
+            }));
     }
     sourceIterators(Array.prototype);
     sourceIterators(ArrayIteratorPrototype);
@@ -84,27 +104,27 @@
     sourceIterators(SetIteratorPrototype);
 
     function redirectIter(iterable) {
-        objDefProp(iterable, 'values', function values() {
-            if (this['&source']) {
-                return this['&source'].values();
+        objDefProp(iterable, "values", function values() {
+            if (this["&source"]) {
+                return this["&source"].values();
             }
             return this;
         });
-        objDefProp(iterable, 'keys', function keys() {
-            if (this['&source']) {
-                return this['&source'].keys();
+        objDefProp(iterable, "keys", function keys() {
+            if (this["&source"]) {
+                return this["&source"].keys();
             }
             return this;
         });
-        objDefProp(iterable, 'entries', function entries() {
-            if (this['&source']) {
-                return this['&source'].entries();
+        objDefProp(iterable, "entries", function entries() {
+            if (this["&source"]) {
+                return this["&source"].entries();
             }
             return this;
         });
         objDefProp(iterable, Symbol.iterator, function iterator() {
-            if (this['&source']) {
-                return this['&source'][Symbol.iterator]();
+            if (this["&source"]) {
+                return this["&source"][Symbol.iterator]();
             }
             return this;
         });
@@ -128,88 +148,150 @@
     };
     getPropKeys(Array.prototype).forEach((x) => {
         if (typeof Array.prototype[x] == "function" && !String.prototype[x]) {
-            objNewProp(String.prototype, x, function() {
-                const arr = Array.from(this);
+            objNewProp(String.prototype, x, function () {
+                const arr = [...this];
                 const result = arr[x](...arguments);
                 if (result?.every?.((x) => isString(x))) {
                     return result.join("");
                 }
                 return result;
             });
-            objNewProp(String.prototype[x], "name", str(x).split(/[^a-zA-Z]/).pop(), );
+            objNewProp(
+                String.prototype[x],
+                "name",
+                str(x)
+                    .split(/[^a-zA-Z]/)
+                    .pop(),
+            );
             objTryProp(Set.prototype[x], "toString", function toString() {
                 return Array.prototype[x].toString();
             });
             if (Array.prototype[x][Symbol.toStringTag]) {
-                objTryProp(Set.prototype[x], Symbol.toStringTag, function toStringTag() {
-                    return Array.prototype[x][Symbol.toStringTag]();
-                }, );
+                objTryProp(
+                    Set.prototype[x],
+                    Symbol.toStringTag,
+                    function toStringTag() {
+                        return Array.prototype[x][Symbol.toStringTag]();
+                    },
+                );
             }
         }
         if (typeof Array.prototype[x] == "function" && !Set.prototype[x]) {
-            objNewProp(Set.prototype, x, function() {
-                const arr = Array.from(this);
+            objNewProp(Set.prototype, x, function () {
+                const arr = [...this];
                 const result = arr[x](...arguments);
                 if (result instanceof Array) {
                     return new Set(result);
                 }
                 return result;
             });
-            objDefProp(Set.prototype[x], "name", str(x).split(/[^a-zA-Z]/).pop(), );
+            objDefProp(
+                Set.prototype[x],
+                "name",
+                str(x)
+                    .split(/[^a-zA-Z]/)
+                    .pop(),
+            );
             objTryProp(Set.prototype[x], "toString", function toString() {
                 return Array.prototype[x].toString();
             });
             if (Array.prototype[x][Symbol.toStringTag]) {
-                objTryProp(Set.prototype[x], Symbol.toStringTag, function toStringTag() {
-                    return Array.prototype[x][Symbol.toStringTag]();
-                }, );
+                objTryProp(
+                    Set.prototype[x],
+                    Symbol.toStringTag,
+                    function toStringTag() {
+                        return Array.prototype[x][Symbol.toStringTag]();
+                    },
+                );
             }
         }
-        if (typeof Array.prototype[x] == "function" && !HTMLCollection.prototype[x]) {
-            objNewProp(HTMLCollection.prototype, x, function() {
+        if (
+            typeof Array.prototype[x] == "function" &&
+            !HTMLCollection.prototype[x]
+        ) {
+            objNewProp(HTMLCollection.prototype, x, function () {
                 return [...this][x](...arguments);
             });
-            objDefProp(HTMLCollection.prototype[x], "name", str(x).split(/[^a-zA-Z]/).pop(), );
+            objDefProp(
+                HTMLCollection.prototype[x],
+                "name",
+                str(x)
+                    .split(/[^a-zA-Z]/)
+                    .pop(),
+            );
         }
-        if (typeof Array.prototype[x] == "function" && !HTMLAllCollection.prototype[x]) {
-            objNewProp(HTMLAllCollection.prototype, x, function() {
+        if (
+            typeof Array.prototype[x] == "function" &&
+            !HTMLAllCollection.prototype[x]
+        ) {
+            objNewProp(HTMLAllCollection.prototype, x, function () {
                 return [...this][x](...arguments);
             });
-            objDefProp(HTMLAllCollection.prototype[x], "name", str(x).split(/[^a-zA-Z]/).pop(), );
+            objDefProp(
+                HTMLAllCollection.prototype[x],
+                "name",
+                str(x)
+                    .split(/[^a-zA-Z]/)
+                    .pop(),
+            );
         }
         if (typeof Array.prototype[x] == "function" && !NodeList.prototype[x]) {
-            objNewProp(NodeList.prototype, x, function() {
+            objNewProp(NodeList.prototype, x, function () {
                 return [...this][x](...arguments);
             });
-            objDefProp(NodeList.prototype[x], "name", str(x).split(/[^a-zA-Z]/).pop(), );
+            objDefProp(
+                NodeList.prototype[x],
+                "name",
+                str(x)
+                    .split(/[^a-zA-Z]/)
+                    .pop(),
+            );
         }
-        if (typeof Array.prototype[x] == "function" && !ArrayBuffer.prototype[x]) {
-            objNewProp(ArrayBuffer.prototype, x, function() {
+        if (
+            typeof Array.prototype[x] == "function" &&
+            !ArrayBuffer.prototype[x]
+        ) {
+            objNewProp(ArrayBuffer.prototype, x, function () {
                 const result = new Int8Array(this)[x](...arguments);
                 return result.buffer ?? result;
             });
-            objDefProp(ArrayBuffer.prototype[x], "name", str(x).split(/[^a-zA-Z]/).pop());
+            objDefProp(
+                ArrayBuffer.prototype[x],
+                "name",
+                str(x)
+                    .split(/[^a-zA-Z]/)
+                    .pop(),
+            );
         }
         [
-        'Int8Array',
-        'Uint8Array',
-        'Uint8ClampedArray',
-        'Int16Array',
-        'Uint16Array',
-        'Int32Array',
-        'Uint32Array',
-        'Float16Array',
-        'Float32Array',
-        'Float64Array',
-        'BigInt64Array',
-        'BigUint64Array'
-        ].forEach(arr=>{
+            "Int8Array",
+            "Uint8Array",
+            "Uint8ClampedArray",
+            "Int16Array",
+            "Uint16Array",
+            "Int32Array",
+            "Uint32Array",
+            "Float16Array",
+            "Float32Array",
+            "Float64Array",
+            "BigInt64Array",
+            "BigUint64Array",
+        ].forEach((arr) => {
             (globalThis[arr] ??= []).prototype ??= [];
-            if (typeof Array.prototype[x] == "function" && !globalThis[arr].prototype[x]) {
-                objNewProp(globalThis[arr].prototype, x, function() {
+            if (
+                typeof Array.prototype[x] == "function" &&
+                !globalThis[arr].prototype[x]
+            ) {
+                objNewProp(globalThis[arr].prototype, x, function () {
                     return [...this][x](...arguments);
                 });
-                objDefProp(ArrayBuffer.prototype[x], "name", str(x).split(/[^a-zA-Z]/).pop());
+                objDefProp(
+                    ArrayBuffer.prototype[x],
+                    "name",
+                    str(x)
+                        .split(/[^a-zA-Z]/)
+                        .pop(),
+                );
             }
         });
     });
@@ -292,82 +374,99 @@
         return addAll(this, ...arr);
     });
     objDefProp(NodeList.prototype, "namedItem", function namedItem(key) {
-        return [...this].find(x => (x?.name == key || x?.id == key || x?.getAttribute?.("name") == key) || x?.getAttribute?.("id") == key);
+        return [...this].find(
+            (x) =>
+                x?.name == key ||
+                x?.id == key ||
+                x?.getAttribute?.("name") == key ||
+                x?.getAttribute?.("id") == key,
+        );
     });
-function extendIter(proto,iterProto){
-    Object.getOwnPropertyNames(proto).forEach(prop=>{try{
-        if (typeof proto[prop] == "function" && !iterProto[prop]) {
-            objNewProp(iterProto, prop, function() {
-                return this['&source'][prop](...arguments);
-            });
-            objDefProp(iterProto[prop], "name", str(prop).split(/[^a-zA-Z]/).pop());
-        }
-    }catch{}
-    });
-}
-    extendIter(Array.prototype,ArrayIteratorPrototype);
-    extendIter(String.prototype,StringIteratorPrototype);
-    extendIter(Set.prototype,SetIteratorPrototype);
+    function extendIter(proto, iterProto) {
+        Object.getOwnPropertyNames(proto).forEach((prop) => {
+            try {
+                if (typeof proto[prop] == "function" && !iterProto[prop]) {
+                    objNewProp(iterProto, prop, function () {
+                        return this["&source"][prop](...arguments);
+                    });
+                    objDefProp(
+                        iterProto[prop],
+                        "name",
+                        str(prop)
+                            .split(/[^a-zA-Z]/)
+                            .pop(),
+                    );
+                }
+            } catch {}
+        });
+    }
+    extendIter(Array.prototype, ArrayIteratorPrototype);
+    extendIter(String.prototype, StringIteratorPrototype);
+    extendIter(Set.prototype, SetIteratorPrototype);
     //small map stuff
-    function mapLike(proto){
-        proto = (globalThis?.[proto]??{}).prototype ?? {};
-objDefProp(proto, 'clear', function clear() {
-        for (const [key] of this) {
-            this['delete'](key);
-        }
-    });
-    (()=>{
-    const deleteKey = Symbol('delete');
-    objDefProp(proto, deleteKey, proto['delete']);
-    objDefProp(proto, 'delete', function $delete() {
-        const bool = this.has(...arguments);
-        this[deleteKey](...arguments);
-        return bool;
-    });
-    })();
-
-    Object.defineProperty(proto, "size", {
-        get() {
-            return [...this.keys()].length;
-        },
-        set() {},
-        enumerable: false,
-        configurable: true,
-    });
-    }
-    mapLike('Headers');
-    mapLike('FormData');
-    objDefProp(Map.prototype, 'append', function append(key,value) {
-        if(!this.has(key))return this.set(key,value);
-        return this.set(Object(key?.valueOf?.()),value);
-    });
-    function getSetCookie(proto){
-    objDefProp(proto, 'getSetCookie', function getSetCookie(){
-        const cookies = [];
-        for (const [key,value] of this){
-            if(/^set-cookie$/i.test(str(key).trim())){
-                cookies.push(value);
+    function mapLike(proto) {
+        proto = (globalThis?.[proto]??{}).prototype??{};
+        objDefProp(proto, "clear", function clear() {
+            for (const [key] of this) {
+                this["delete"](key);
             }
-        }
-        return cookies;
-    });
+        });
+        (() => {
+            const $delete = Symbol("delete");
+            objDefProp(proto, $delete, proto["delete"]);
+            objDefProp(proto, "delete", function _delete() {
+                const bool = this.has(...arguments);
+                this[$delete](...arguments);
+                return bool;
+            });
+        })();
+
+        Object.defineProperty(proto, "size", {
+            get() {
+                return [...this.keys()].length;
+            },
+            set() {},
+            enumerable: false,
+            configurable: true,
+        });
     }
-    function getAll(proto){
-        objDefProp(proto, 'getAll', function getAll(get){
+    mapLike("Headers");
+    mapLike("FormData");
+    objDefProp(Map.prototype, "append", function append(key, value) {
+        if (!this.has(key)) return this.set(key, value);
+        return this.set(Object(key?.valueOf?.()), value);
+    });
+    function getSetCookie(proto) {
+        objDefProp(proto, "getSetCookie", function getSetCookie() {
+            const cookies = [];
+            for (const [key, value] of this) {
+                if (/^set-cookie$/i.test(str(key).trim())) {
+                    cookies.push(value);
+                }
+            }
+            return cookies;
+        });
+    }
+    function getAll(proto) {
+        objDefProp(proto, "getAll", function getAll(get) {
             const all = [];
-            for (const [key,value] of this){
-                if(get?.valueOf?.() == key?.valueOf?.()){
+            for (const [key, value] of this) {
+                if (get?.valueOf?.() == key?.valueOf?.()) {
                     all.push(value);
                 }
             }
             return all;
         });
-        }
+    }
     getSetCookie(Map.prototype);
     getSetCookie(globalThis?.FormData?.prototype??{});
     getAll(Map.prototype);
     getAll(globalThis?.Headers?.prototype??{});
-    objDefProp(globalThis?.FormData?.prototype??{}, 'forEach', function forEach(){
-        return new Map(this).forEach(...arguments);
-    });
+    objDefProp(
+        globalThis?.FormData?.prototype??{},
+        "forEach",
+        function forEach() {
+            return new Map(this).forEach(...arguments);
+        },
+    );
 })();
