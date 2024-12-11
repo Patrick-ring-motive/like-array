@@ -43,32 +43,37 @@
     (globalThis.HTMLCollection ??= []).prototype ??= [];
     (globalThis.HTMLAllCollection ??= []).prototype ??= [];
     (globalThis.NodeList ??= []).prototype ??= [];
+    const str = x => String(x?.description ?? x?.source ?? x);
 
     function sourceIterators(iterable) {
         const valuesKey = Symbol("values");
         objDefProp(iterable, valuesKey, iterable.values);
         objDefProp(iterable, "values", function values() {
+            const proto = Object.create(ArrayIteratorPrototype);
             const iter = this[valuesKey]();
-            objDefProp(iter, "&source", this);
-            return iter;
+            objDefProp(proto, "&source", this);
+            return Object.setPrototypeOf(iter,proto);
         });
         const keysKey = Symbol("keys");
         iterable.keys && (objDefProp(iterable, keysKey, iterable.keys), objDefProp(iterable, "keys", function keys() {
+            const proto = Object.create(ArrayIteratorPrototype);
             const iter = this[keysKey]();
-            objDefProp(iter, "&source", this);
-            return iter;
+            objDefProp(proto, "&source", this);
+            return Object.setPrototypeOf(iter,proto);
         }));
         const entriesKey = Symbol("entries");
         iterable.entries && (objDefProp(iterable, entriesKey, iterable.entries), objDefProp(iterable, "entries", function entries() {
+            const proto = Object.create(ArrayIteratorPrototype);
             const iter = this[entriesKey]();
-            objDefProp(iter, "&source", this);
-            return iter;
+            objDefProp(proto, "&source", this);
+            return Object.setPrototypeOf(iter,proto);
         }));
         const symbolIterator = Symbol("iterator");
-        iterable[Symbol.iterator] && (objDefProp(iterable, symbolIterator, iterable[Symbol.iterator], ), objDefProp(iterable, Symbol.iterator, function iterator() {
+        iterable[Symbol.iterator] && (objDefProp(iterable, symbolIterator, iterable[Symbol.iterator]), objDefProp(iterable, Symbol.iterator, function iterator() {
+            const proto = Object.create(ArrayIteratorPrototype);
             const iter = this[symbolIterator]();
-            objDefProp(iter, "&source", this);
-            return iter;
+            objDefProp(proto, "&source", this);
+            return Object.setPrototypeOf(iter,proto);;
         }));
     }
     sourceIterators(Array.prototype);
@@ -131,7 +136,7 @@
                 }
                 return result;
             });
-            objNewProp(String.prototype[x], "name", String(x?.description ?? x).split(/[^a-zA-Z]/).pop(), );
+            objNewProp(String.prototype[x], "name", str(x).split(/[^a-zA-Z]/).pop(), );
             objTryProp(Set.prototype[x], "toString", function toString() {
                 return Array.prototype[x].toString();
             });
@@ -150,7 +155,7 @@
                 }
                 return result;
             });
-            objDefProp(Set.prototype[x], "name", String(x?.description ?? x).split(/[^a-zA-Z]/).pop(), );
+            objDefProp(Set.prototype[x], "name", str(x).split(/[^a-zA-Z]/).pop(), );
             objTryProp(Set.prototype[x], "toString", function toString() {
                 return Array.prototype[x].toString();
             });
@@ -164,26 +169,26 @@
             objNewProp(HTMLCollection.prototype, x, function() {
                 return [...this][x](...arguments);
             });
-            objDefProp(HTMLCollection.prototype[x], "name", String(x?.description ?? x).split(/[^a-zA-Z]/).pop(), );
+            objDefProp(HTMLCollection.prototype[x], "name", str(x).split(/[^a-zA-Z]/).pop(), );
         }
         if (typeof Array.prototype[x] == "function" && !HTMLAllCollection.prototype[x]) {
             objNewProp(HTMLAllCollection.prototype, x, function() {
                 return [...this][x](...arguments);
             });
-            objDefProp(HTMLAllCollection.prototype[x], "name", String(x?.description ?? x).split(/[^a-zA-Z]/).pop(), );
+            objDefProp(HTMLAllCollection.prototype[x], "name", str(x).split(/[^a-zA-Z]/).pop(), );
         }
         if (typeof Array.prototype[x] == "function" && !NodeList.prototype[x]) {
             objNewProp(NodeList.prototype, x, function() {
                 return [...this][x](...arguments);
             });
-            objDefProp(NodeList.prototype[x], "name", String(x?.description ?? x).split(/[^a-zA-Z]/).pop(), );
+            objDefProp(NodeList.prototype[x], "name", str(x).split(/[^a-zA-Z]/).pop(), );
         }
         if (typeof Array.prototype[x] == "function" && !ArrayBuffer.prototype[x]) {
             objNewProp(ArrayBuffer.prototype, x, function() {
                 const result = new Int8Array(this)[x](...arguments);
                 return result.buffer ?? result;
             });
-            objDefProp(ArrayBuffer.prototype[x], "name", String(x?.description ?? x).split(/[^a-zA-Z]/).pop(), );
+            objDefProp(ArrayBuffer.prototype[x], "name", str(x).split(/[^a-zA-Z]/).pop());
         }
         [
         'Int8Array',
@@ -204,7 +209,7 @@
                 objNewProp(globalThis[arr].prototype, x, function() {
                     return [...this][x](...arguments);
                 });
-                objDefProp(ArrayBuffer.prototype[x], "name", String(x?.description ?? x).split(/[^a-zA-Z]/).pop(), );
+                objDefProp(ArrayBuffer.prototype[x], "name", str(x).split(/[^a-zA-Z]/).pop());
             }
         });
     });
@@ -289,20 +294,39 @@
     objDefProp(NodeList.prototype, "namedItem", function namedItem(key) {
         return [...this].find(x => (x?.name == key || x?.id == key || x?.getAttribute?.("name") == key) || x?.getAttribute?.("id") == key);
     });
+function extendIter(proto,iterProto){
+    Object.getOwnPropertyNames(proto).forEach(prop=>{try{
+        if (typeof proto[prop] == "function" && !iterProto[prop]) {
+            objNewProp(iterProto, prop, function() {
+                return this['&source'][prop](...arguments);
+            });
+            objDefProp(iterProto[prop], "name", str(prop).split(/[^a-zA-Z]/).pop());
+        }
+    }catch{}
+    });
+}
+    extendIter(Array.prototype,ArrayIteratorPrototype);
+    extendIter(String.prototype,StringIteratorPrototype);
+    extendIter(Set.prototype,SetIteratorPrototype);
     //small map stuff
-    objDefProp(Headers.prototype, 'clear', function clear() {
+    function mapLike(proto){
+        proto = (globalThis?.[proto]??{}).prototype ?? {};
+objDefProp(proto, 'clear', function clear() {
         for (const [key] of this) {
-            this.delete(key);
+            this['delete'](key);
         }
     });
+    (()=>{
     const deleteKey = Symbol('delete');
-    objDefProp(Headers.prototype, deleteKey, Headers.prototype.delete);
-    objDefProp(Headers.prototype, 'delete', function $delete() {
+    objDefProp(proto, deleteKey, proto['delete']);
+    objDefProp(proto, 'delete', function $delete() {
         const bool = this.has(...arguments);
         this[deleteKey](...arguments);
         return bool;
     });
-    Object.defineProperty(Headers.prototype, "size", {
+    })();
+
+    Object.defineProperty(proto, "size", {
         get() {
             return [...this.keys()].length;
         },
@@ -310,14 +334,15 @@
         enumerable: false,
         configurable: true,
     });
+    }
+    mapLike('Headers');
+    mapLike('FormData');
     objDefProp(Map.prototype, 'append', function append(key,value) {
         if(!this.has(key))return this.set(key,value);
-        let newKey = Object(key);
-        if (newKey === key) newKey = Object.create(key);
-        return this.set(newKey,value);
+        return this.set(Object(key?.valueOf?.()),value);
     });
-    const str = x => String(x.description ?? x);
-    objDefProp(Map.prototype, 'getSetCookie', function getSetCookie(){
+    function getSetCookie(proto){
+    objDefProp(proto, 'getSetCookie', function getSetCookie(){
         const cookies = [];
         for (const [key,value] of this){
             if(/^set-cookie$/i.test(str(key).trim())){
@@ -325,5 +350,24 @@
             }
         }
         return cookies;
+    });
+    }
+    function getAll(proto){
+        objDefProp(proto, 'getAll', function getAll(get){
+            const all = [];
+            for (const [key,value] of this){
+                if(get?.valueOf?.() == key?.valueOf?.()){
+                    all.push(value);
+                }
+            }
+            return all;
+        });
+        }
+    getSetCookie(Map.prototype);
+    getSetCookie(globalThis?.FormData?.prototype??{});
+    getAll(Map.prototype);
+    getAll(globalThis?.Headers?.prototype??{});
+    objDefProp(globalThis?.FormData?.prototype??{}, 'forEach', function forEach(){
+        return new Map(this).forEach(...arguments);
     });
 })();
