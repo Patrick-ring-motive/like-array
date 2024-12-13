@@ -64,6 +64,7 @@
     const str = (x) => String(x?.description ?? x?.source ?? x);
 
     function sourceIterators(iterable) {
+        (()=>{
         const $values = Symbol("values");
         objDefProp(iterable, $values, iterable.values);
         objDefProp(iterable, "values", function values() {
@@ -71,6 +72,8 @@
             objDefProp(iter, "&source", this);
             return iter;
         });
+        })();
+        (()=>{
         const $keys = Symbol("keys");
         iterable.keys &&
             (objDefProp(iterable, $keys, iterable.keys),
@@ -79,6 +82,8 @@
                 objDefProp(iter, "&source", this);
                 return iter;
             }));
+        })();
+        (()=>{
         const $entries = Symbol("entries");
         iterable.entries &&
             (objDefProp(iterable, $entries, iterable.entries),
@@ -87,6 +92,8 @@
                 objDefProp(iter, "&source", this);
                 return iter;
             }));
+        })();
+        (()=>{
         const $iterator = Symbol("iterator");
         iterable[Symbol.iterator] &&
             (objDefProp(iterable, $iterator, iterable[Symbol.iterator]),
@@ -95,6 +102,7 @@
                 objDefProp(iter, "&source", this);
                 return iter;
             }));
+        })();
     }
     sourceIterators(Array.prototype);
     sourceIterators(ArrayIteratorPrototype);
@@ -432,6 +440,7 @@
     }
     mapLike("Headers");
     mapLike("FormData");
+    mapLike("URLSearchParams");
     objDefProp(Map.prototype, "append", function append(key, value) {
         if (!this.has(key)) return this.set(key, value);
         return this.set(Object(key?.valueOf?.()), value);
