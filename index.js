@@ -478,4 +478,32 @@
             return new Map(this).forEach(...arguments);
         },
     );
+  [
+    'Map',
+    'Headers',
+    'FormData'
+    ].forEach(mapLike=>{
+                    (globalThis[mapLike]?.prototype??{}).sort = function sort(){
+                                    const arr = [...this.entries()].sort((a,b)=>{
+                                                    const aKey = String(a?.[0]);
+                                                    const bKey = String(b?.[0]);
+                                                    if(aKey > bKey)return 1;
+                                                    if(bKey > aKey)return -1;
+                                                    const aValue = String(a?.[1]);
+                                                    const bValue = String(b?.[1]);
+                                                    if(aValue > bValue)return 1;
+                                                    if(bValue > aValue)return -1;
+                                                    return 0 ;
+                                    });
+                                    this.clear();
+                                    arr.forEach(x=>{
+                                                    (this.append ?? this.set)(x?.[0],x?.[1]);
+                                    });
+                                    return this;
+                    };
+    });
+
+
+
+    
 })();
